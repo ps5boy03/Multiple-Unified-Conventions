@@ -1,0 +1,72 @@
+local function unloadUNC()
+    local getService = game.GetService;
+    local cashed = {}
+    local environment = {
+        isnetworkowner = function(v, ignoreErrors)
+            if not v then 
+                error('An argument has not been passed.')
+            end;
+            if not v:IsA('BasePart') then 
+                if not ignoreErrors then 
+                    error('The argument passed is NOT a basepart.')
+                end;    
+                return false;
+            end;
+            if v.ReceiveAge == 0  then 
+                return true
+            else
+                return false
+            end;
+        end;
+        executor = {
+            getfunctionsinregistry = function(source, misc)
+                local functions = {};
+                for index, value in next, getreg() do 
+                    if type(value) ~= 'function' then continue end;
+                    local data = debug.getinfo(value);
+                    if data.source:find(tostring(source)) then 
+                        table.insert(functions, value)
+                    end;
+                    if misc then 
+                        if misc.output then 
+                            warn(index, value)
+                        end;
+                    end;
+                end;
+                return functions
+            end;
+            cleantable = function(tbl)
+                for index, value in next, tbl do 
+                    if type(index) == 'number' then 
+                        table.remove(tbl, index)
+                    else
+                        tbl[index] = nil;
+                    end;
+                end;
+            end;
+        };
+        cleanService = setmetatable({}, {
+            __index = function(_, key)
+                if cashed[key] then 
+                    return cashed[key]
+                end;
+                local newCache = cloneref(getService(game, key))
+                cashed[key] = newCache
+                return newCache;
+            end;
+            __call = function(_, key)
+                if cashed[key] then 
+                    return cashed[key]
+                end;
+                local newCache = cloneref(getService(game, key))
+                cashed[key] = newCache
+                return newCache;
+            end;
+        })
+    }
+    for index, value in next, environment do 
+        getgenv()[index] = value
+    end;    
+end;
+unloadUNC()
+return 'Loaded functions into the executor'
